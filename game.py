@@ -5,21 +5,53 @@ from ui import Button, draw_text, draw_paper_background
 from board import Board
 
 
+# =========================
+# ЕКРАН ПЕРЕДАЧІ ХОДУ
+# =========================
+def pass_turn_screen(screen, font, big_font, player_name):
+    continue_btn = Button(410, 430, 280, 60, "Продовжити")
+
+    while True:
+        draw_paper_background(screen)
+
+        draw_text(screen, "Передача ходу", 400, 180, big_font)
+        draw_text(screen, "Попросіть попереднього гравця відійти.", 300, 270, font)
+        draw_text(screen, f"Хід: {player_name}", 420, 320, font)
+
+        continue_btn.draw(screen, font)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if continue_btn.is_clicked(event):
+                return  # ← ВАЖЛИВО! НЕ sys.exit()
+
+        pygame.display.update()
+
+
+# =========================
+# СТВОРЕННЯ СПИСКУ КОРАБЛІВ
+# =========================
 def create_ship_list():
-    result = []
+    ships = []
 
     for name, size, count in SHIPS:
-        result.append({
+        ships.append({
             "name": name,
             "size": size,
             "left": count
         })
 
-    return result
+    return ships
 
 
-def placement_screen(screen, font, big_font):
-    board = Board(480, 150)
+# =========================
+# ЕКРАН РОЗСТАНОВКИ
+# =========================
+def placement_screen(screen, font, small_font, big_font, player_name):
+    board = Board(500, 150)
     ships = create_ship_list()
 
     selected_index = None
@@ -31,68 +63,75 @@ def placement_screen(screen, font, big_font):
     while True:
         draw_paper_background(screen)
 
-        # Заголовок по центру
-        draw_text(screen, "Розміщення кораблів", 380, 40, big_font)
+        # ===== ЗАГОЛОВОК =====
+        draw_text(screen, f"{player_name}: розміщення кораблів", 300, 50, big_font)
 
-        # ===== ЛІВА ПАНЕЛЬ ПІДКАЗОК =====
-        panel_rect = pygame.Rect(40, 90, 300, 200)
-        pygame.draw.rect(screen, PAPER_LIGHT, panel_rect, border_radius=10)
-        pygame.draw.rect(screen, PAPER_LINE, panel_rect, 3, border_radius=10)
+        # ===== ПАНЕЛЬ ІНСТРУКЦІЇ =====
+        panel_rect = pygame.Rect(40, 90, 360, 250)
+        pygame.draw.rect(screen, PAPER_LIGHT, panel_rect, border_radius=14)
+        pygame.draw.rect(screen, PAPER_LINE, panel_rect, 4, border_radius=14)
 
-        draw_text(screen, "ІНСТРУКЦІЯ:", 60, 105, font, PAPER_DARK)
-        draw_text(screen, "1. Обери корабель", 60, 135, font)
-        draw_text(screen, "2. Наведи на поле", 60, 165, font)
-        draw_text(screen, "3. ЛКМ — поставити", 60, 195, font)
-        draw_text(screen, "R — повернути", 60, 225, font)
-        draw_text(screen, "Клік по кораблю — прибрати", 60, 255, font)
+        draw_text(screen, "ІНСТРУКЦІЯ:", 70, 115, font, PAPER_DARK)
+        draw_text(screen, "1. Обери корабель", 70, 160, small_font)
+        draw_text(screen, "2. Наведи на поле", 70, 195, small_font)
+        draw_text(screen, "3. ЛКМ — поставити", 70, 230, small_font)
+        draw_text(screen, "R — повернути", 70, 265, small_font)
+        draw_text(screen, "Клік по кораблю — прибрати", 70, 300, small_font)
+
+        # ===== ДОШКА =====
         board.draw(screen, font)
 
+        # ===== КНОПКИ КОРАБЛІВ =====
         ship_buttons = []
+        y = 360
 
-        y = 310
         for i, ship in enumerate(ships):
             text = f"{ship['name']} ({ship['size']}) x{ship['left']}"
 
             color = (220, 210, 180)
 
             if selected_index == i:
-                color = (205, 190, 145)
+                color = (200, 180, 130)
 
             if ship["left"] <= 0:
-                color = (190, 180, 160)
+                color = (180, 170, 150)
 
             btn = Button(70, y, 260, 45, text, color)
             btn.draw(screen, font)
 
             ship_buttons.append((btn, i))
-            y += 58
+            y += 55
 
+        # ===== ПРЕВ'Ю =====
         mouse_cell = board.get_cell_from_mouse(pygame.mouse.get_pos())
-
         preview_cells = []
         can_place = False
 
         if selected_index is not None and mouse_cell:
-            selected_ship = ships[selected_index]
+            ship = ships[selected_index]
 
-            if selected_ship["left"] > 0:
+            if ship["left"] > 0:
                 col, row = mouse_cell
+
                 preview_cells = board.get_ship_cells(
                     col,
                     row,
-                    selected_ship["size"],
+                    ship["size"],
                     orientation
                 )
+
                 can_place = board.can_place_ship(preview_cells)
+
                 board.draw_preview(screen, preview_cells, can_place)
 
+        # ===== СТАН =====
         if selected_index is not None:
             ship = ships[selected_index]
             draw_text(
                 screen,
-                f"Обрано: {ship['name']}, напрямок: {'горизонтально' if orientation == 'H' else 'вертикально'}",
-                390,
-                610,
+                f"Обрано: {ship['name']} ({'горизонтально' if orientation == 'H' else 'вертикально'})",
+                400,
+                620,
                 font,
                 BLUE_INK
             )
@@ -104,6 +143,7 @@ def placement_screen(screen, font, big_font):
 
         back_btn.draw(screen, font)
 
+        # ===== ОБРОБКА ПОДІЙ =====
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -133,33 +173,29 @@ def placement_screen(screen, font, big_font):
                     removed = board.remove_ship_at(col, row)
 
                     if removed:
-                        removed_name, removed_size = removed
+                        name, size = removed
 
                         for ship in ships:
-                            if ship["name"] == removed_name and ship["size"] == removed_size:
+                            if ship["name"] == name and ship["size"] == size:
                                 ship["left"] += 1
                                 selected_index = ships.index(ship)
                                 break
 
                     elif selected_index is not None:
-                        selected_ship = ships[selected_index]
+                        ship = ships[selected_index]
 
-                        if selected_ship["left"] > 0:
+                        if ship["left"] > 0:
                             cells = board.get_ship_cells(
                                 col,
                                 row,
-                                selected_ship["size"],
+                                ship["size"],
                                 orientation
                             )
 
-                            if board.place_ship(
-                                selected_ship["name"],
-                                selected_ship["size"],
-                                cells
-                            ):
-                                selected_ship["left"] -= 1
+                            if board.place_ship(ship["name"], ship["size"], cells):
+                                ship["left"] -= 1
 
-                                if selected_ship["left"] == 0:
+                                if ship["left"] == 0:
                                     selected_index = None
 
-        pygame.display.update()
+        pygame.display.update() 
