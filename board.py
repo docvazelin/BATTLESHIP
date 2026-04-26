@@ -8,7 +8,11 @@ class Board:
         self.y = y
         self.cell = cell_size
         self.ships = []
+        self.shots = {}  # ← для пострілів
 
+    # =========================
+    # МАЛЮВАННЯ ПОЛЯ
+    # =========================
     def draw(self, screen, font, show_ships=True):
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
@@ -22,27 +26,24 @@ class Board:
                 pygame.draw.rect(screen, PAPER_LIGHT, rect)
                 pygame.draw.rect(screen, PAPER_LINE, rect, 2)
 
+        # літери
         for col, letter in enumerate(LETTERS):
             text = font.render(letter, True, INK)
             screen.blit(
                 text,
-                (
-                    self.x + col * self.cell + self.cell // 2 - text.get_width() // 2,
-                    self.y - 35
-                )
+                (self.x + col * self.cell + 10, self.y - 30)
             )
 
+        # цифри
         for row in range(BOARD_SIZE):
             number = str(BOARD_SIZE - row)
             text = font.render(number, True, INK)
             screen.blit(
                 text,
-                (
-                    self.x - 35,
-                    self.y + row * self.cell + self.cell // 2 - text.get_height() // 2
-                )
+                (self.x - 30, self.y + row * self.cell + 10)
             )
 
+        # кораблі
         if show_ships:
             for ship in self.ships:
                 for col, row in ship["cells"]:
@@ -54,6 +55,12 @@ class Board:
                     )
                     pygame.draw.rect(screen, SHIP_COLOR, rect, border_radius=6)
 
+        # постріли
+        self.draw_shots(screen)
+
+    # =========================
+    # ПРЕВ'Ю КОРАБЛЯ
+    # =========================
     def draw_preview(self, screen, cells, can_place):
         if not cells:
             return
@@ -70,6 +77,9 @@ class Board:
                 )
                 pygame.draw.rect(screen, color, rect, border_radius=6)
 
+    # =========================
+    # ОТРИМАННЯ КЛІТИНКИ
+    # =========================
     def get_cell_from_mouse(self, pos):
         mx, my = pos
 
@@ -84,6 +94,9 @@ class Board:
 
         return col, row
 
+    # =========================
+    # КЛІТИНКИ КОРАБЛЯ
+    # =========================
     def get_ship_cells(self, col, row, size, orientation):
         cells = []
 
@@ -95,6 +108,9 @@ class Board:
 
         return cells
 
+    # =========================
+    # ПЕРЕВІРКА МОЖЛИВОСТІ РОЗМІЩЕННЯ
+    # =========================
     def can_place_ship(self, cells):
         for col, row in cells:
             if col < 0 or col >= BOARD_SIZE or row < 0 or row >= BOARD_SIZE:
@@ -114,6 +130,9 @@ class Board:
 
         return True
 
+    # =========================
+    # ДОДАТИ КОРАБЕЛЬ
+    # =========================
     def place_ship(self, name, size, cells):
         if self.can_place_ship(cells):
             self.ships.append({
@@ -125,6 +144,9 @@ class Board:
 
         return False
 
+    # =========================
+    # ВИДАЛИТИ КОРАБЕЛЬ
+    # =========================
     def remove_ship_at(self, col, row):
         for ship in self.ships:
             if (col, row) in ship["cells"]:
@@ -132,3 +154,33 @@ class Board:
                 return ship["name"], ship["size"]
 
         return None
+
+    # =========================
+    # ПОСТРІЛ
+    # =========================
+    def receive_shot(self, col, row):
+        if (col, row) in self.shots:
+            return "again"
+
+        for ship in self.ships:
+            if (col, row) in ship["cells"]:
+                self.shots[(col, row)] = "hit"
+                return "hit"
+
+        self.shots[(col, row)] = "miss"
+        return "miss"
+
+    # =========================
+    # МАЛЮВАННЯ ПОСТРІЛІВ
+    # =========================
+    def draw_shots(self, screen):
+        for (col, row), result in self.shots.items():
+            cx = self.x + col * self.cell + self.cell // 2
+            cy = self.y + row * self.cell + self.cell // 2
+
+            if result == "hit":
+                pygame.draw.line(screen, RED_INK, (cx - 10, cy - 10), (cx + 10, cy + 10), 3)
+                pygame.draw.line(screen, RED_INK, (cx + 10, cy - 10), (cx - 10, cy + 10), 3)
+
+            elif result == "miss":
+                pygame.draw.circle(screen, BLUE_INK, (cx, cy), 6, 2)

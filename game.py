@@ -20,19 +20,21 @@ def pass_turn_screen(screen, font, big_font, player_name):
 
         continue_btn.draw(screen, font)
 
+        pygame.display.update()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            if continue_btn.is_clicked(event):
-                return  # ← ВАЖЛИВО! НЕ sys.exit()
-
-        pygame.display.update()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and continue_btn.rect.collidepoint(event.pos):
+                    pygame.event.clear()
+                    return
 
 
 # =========================
-# СТВОРЕННЯ СПИСКУ КОРАБЛІВ
+# СПИСОК КОРАБЛІВ
 # =========================
 def create_ship_list():
     ships = []
@@ -63,32 +65,26 @@ def placement_screen(screen, font, small_font, big_font, player_name):
     while True:
         draw_paper_background(screen)
 
-        # ===== ЗАГОЛОВОК =====
         draw_text(screen, f"{player_name}: розміщення кораблів", 300, 50, big_font)
 
-        # ===== ПАНЕЛЬ ІНСТРУКЦІЇ =====
-        panel_rect = pygame.Rect(40, 90, 360, 250)
+        # панель інструкції
+        panel_rect = pygame.Rect(40, 90, 360, 280)
         pygame.draw.rect(screen, PAPER_LIGHT, panel_rect, border_radius=14)
         pygame.draw.rect(screen, PAPER_LINE, panel_rect, 4, border_radius=14)
 
         draw_text(screen, "ІНСТРУКЦІЯ:", 70, 115, font, PAPER_DARK)
-
         draw_text(screen, "1. Обери корабель", 70, 155, small_font)
         draw_text(screen, "2. Наведи на поле", 70, 185, small_font)
-
         draw_text(screen, "ЛКМ — поставити корабель", 70, 220, small_font)
         draw_text(screen, "ЛКМ по кораблю — перемістити", 70, 250, small_font)
-
         draw_text(screen, "ПКМ по кораблю — видалити", 70, 285, small_font)
-
         draw_text(screen, "R — змінити напрямок", 70, 320, small_font)
-        
-        # ===== ДОШКА =====
+
         board.draw(screen, font)
 
-        # ===== КНОПКИ КОРАБЛІВ =====
+        # кнопки кораблів
         ship_buttons = []
-        y = 360
+        y = 395
 
         for i, ship in enumerate(ships):
             text = f"{ship['name']} ({ship['size']}) x{ship['left']}"
@@ -107,7 +103,7 @@ def placement_screen(screen, font, small_font, big_font, player_name):
             ship_buttons.append((btn, i))
             y += 55
 
-        # ===== ПРЕВ'Ю =====
+        # прев'ю
         mouse_cell = board.get_cell_from_mouse(pygame.mouse.get_pos())
         preview_cells = []
         can_place = False
@@ -126,10 +122,9 @@ def placement_screen(screen, font, small_font, big_font, player_name):
                 )
 
                 can_place = board.can_place_ship(preview_cells)
-
                 board.draw_preview(screen, preview_cells, can_place)
 
-        # ===== СТАН =====
+        # статус
         if selected_index is not None:
             ship = ships[selected_index]
             draw_text(
@@ -148,17 +143,11 @@ def placement_screen(screen, font, small_font, big_font, player_name):
 
         back_btn.draw(screen, font)
 
-        # ===== ОБРОБКА ПОДІЙ =====
+        # події
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
-            if back_btn.is_clicked(event):
-                return None
-
-            if all_placed and ready_btn.is_clicked(event):
-                return board
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
@@ -166,10 +155,8 @@ def placement_screen(screen, font, small_font, big_font, player_name):
 
             if event.type == pygame.MOUSEBUTTONDOWN:
 
-                # --- ЛІВА КНОПКА МИШІ (ЛКМ) ---
+                # ЛКМ
                 if event.button == 1:
-
-                    # Кнопки інтерфейсу працюють тільки на ЛКМ
                     if back_btn.is_clicked(event):
                         return None
 
@@ -178,7 +165,6 @@ def placement_screen(screen, font, small_font, big_font, player_name):
 
                     clicked_menu = False
 
-                    # Вибір типу корабля зліва
                     for btn, index in ship_buttons:
                         if btn.is_clicked(event):
                             clicked_menu = True
@@ -186,53 +172,44 @@ def placement_screen(screen, font, small_font, big_font, player_name):
                             if ships[index]["left"] > 0:
                                 selected_index = index
 
-                    # Якщо клікнули не по меню
                     if not clicked_menu:
                         cell = board.get_cell_from_mouse(event.pos)
 
                         if cell:
                             col, row = cell
 
-                            # Якщо корабель обрано — ставимо його
                             if selected_index is not None:
-                                selected_ship = ships[selected_index]
+                                ship = ships[selected_index]
 
-                                if selected_ship["left"] > 0:
+                                if ship["left"] > 0:
                                     cells = board.get_ship_cells(
                                         col,
                                         row,
-                                        selected_ship["size"],
+                                        ship["size"],
                                         orientation
                                     )
 
                                     if board.can_place_ship(cells):
-                                        if board.place_ship(
-                                            selected_ship["name"],
-                                            selected_ship["size"],
-                                            cells
-                                        ):
-                                            selected_ship["left"] -= 1
+                                        if board.place_ship(ship["name"], ship["size"], cells):
+                                            ship["left"] -= 1
 
-                                            if selected_ship["left"] == 0:
+                                            if ship["left"] == 0:
                                                 selected_index = None
 
-                            # Якщо нічого не обрано — піднімаємо корабель для переміщення
                             else:
                                 removed = board.remove_ship_at(col, row)
 
                                 if removed:
-                                    removed_name, removed_size = removed
+                                    name, size = removed
 
                                     for i, ship in enumerate(ships):
-                                        if ship["name"] == removed_name and ship["size"] == removed_size:
+                                        if ship["name"] == name and ship["size"] == size:
                                             ship["left"] += 1
                                             selected_index = i
                                             break
 
-                # --- ПРАВА КНОПКА МИШІ (ПКМ) ---
+                # ПКМ
                 elif event.button == 3:
-
-                    # ПКМ видаляє корабель тільки якщо зараз нічого не обрано
                     if selected_index is None:
                         cell = board.get_cell_from_mouse(event.pos)
 
@@ -241,11 +218,90 @@ def placement_screen(screen, font, small_font, big_font, player_name):
                             removed = board.remove_ship_at(col, row)
 
                             if removed:
-                                removed_name, removed_size = removed
+                                name, size = removed
 
                                 for ship in ships:
-                                    if ship["name"] == removed_name and ship["size"] == removed_size:
+                                    if ship["name"] == name and ship["size"] == size:
                                         ship["left"] += 1
                                         break
 
-        pygame.display.update() 
+        pygame.display.update()
+
+
+# =========================
+# БОЙОВИЙ ЕКРАН
+# =========================
+def battle_screen(screen, font, big_font, board_player_1, board_player_2):
+    current_player = 1
+    message = "Гравець 1, зробіть постріл!"
+
+    while True:
+        draw_paper_background(screen)
+
+        draw_text(screen, "Бій", 515, 40, big_font)
+
+        if current_player == 1:
+            own_data = board_player_1
+            enemy_data = board_player_2
+            player_text = "Хід гравця 1"
+        else:
+            own_data = board_player_2
+            enemy_data = board_player_1
+            player_text = "Хід гравця 2"
+
+        own_board = Board(80, 170, 36)
+        enemy_board = Board(620, 170, 36)
+
+        own_board.ships = own_data.ships
+        own_board.shots = own_data.shots
+
+        enemy_board.ships = enemy_data.ships
+        enemy_board.shots = enemy_data.shots
+
+        draw_text(screen, player_text, 455, 95, font)
+        draw_text(screen, "Ваше поле", 160, 130, font)
+        draw_text(screen, "Поле суперника", 650, 130, font)
+
+        own_board.draw(screen, font, show_ships=True)
+        enemy_board.draw(screen, font, show_ships=False)
+
+        draw_text(screen, message, 380, 620, font)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                cell = enemy_board.get_cell_from_mouse(event.pos)
+
+                if cell:
+                    col, row = cell
+
+                    result = enemy_data.receive_shot(col, row)
+
+                    if result == "again":
+                        message = "Ти вже сюди стріляв"
+
+                    elif result == "hit":
+                        message = "Влучив!"
+
+                    elif result == "miss":
+                        message = "Мимо:("
+
+                        pygame.display.update()
+                        pygame.time.delay(800)
+                        pygame.event.clear()
+
+                        current_player = 2 if current_player == 1 else 1
+
+                        pass_turn_screen(
+                            screen,
+                            font,
+                            big_font,
+                            f"Гравець {current_player}"
+                        )
+
+                        message = f"Гравець {current_player}, зробіть постріл!"
+
+        pygame.display.update()

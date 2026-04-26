@@ -1,7 +1,7 @@
 import pygame
 from settings import *
 from menus import main_menu
-from game import placement_screen, pass_turn_screen
+from game import placement_screen, pass_turn_screen, battle_screen
 
 pygame.init()
 
@@ -49,11 +49,13 @@ def main():
             if board_player_2 is None:
                 continue
 
-            print("Кораблі обох гравців розставлено")
-
-            # 👉 тут далі буде бойова логіка (наступний етап)
-            # battle_screen(board_player_1, board_player_2)
-
+            battle_screen(
+                screen,
+                font,
+                big_font,
+                board_player_1,
+                board_player_2
+            )
 
 if __name__ == "__main__":
     main()
