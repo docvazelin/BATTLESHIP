@@ -1,4 +1,5 @@
 import pygame
+import random
 from settings import *
 
 
@@ -57,7 +58,24 @@ class Board:
 
         # постріли
         self.draw_shots(screen)
+    def auto_place_all_ships(self):
+        self.ships = []
+        self.shots = {}
 
+        for name, size, count in SHIPS:
+            for _ in range(count):
+                placed = False
+
+                while not placed:
+                    orientation = random.choice(["H", "V"])
+                    col = random.randint(0, BOARD_SIZE - 1)
+                    row = random.randint(0, BOARD_SIZE - 1)
+
+                    cells = self.get_ship_cells(col, row, size, orientation)
+
+                    if self.can_place_ship(cells):
+                        self.place_ship(name, size, cells)
+                        placed = True
     # =========================
     # ПРЕВ'Ю КОРАБЛЯ
     # =========================

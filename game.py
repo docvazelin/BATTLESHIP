@@ -61,6 +61,7 @@ def placement_screen(screen, font, small_font, big_font, player_name):
 
     ready_btn = Button(850, 630, 180, 55, "Готово")
     back_btn = Button(70, 630, 180, 55, "Назад")
+    auto_btn = Button(650, 630, 180, 55, "Авто")
 
     while True:
         draw_paper_background(screen)
@@ -142,6 +143,7 @@ def placement_screen(screen, font, small_font, big_font, player_name):
             ready_btn.draw(screen, font)
 
         back_btn.draw(screen, font)
+        auto_btn.draw(screen, font)
 
         # події
         for event in pygame.event.get():
@@ -159,6 +161,13 @@ def placement_screen(screen, font, small_font, big_font, player_name):
                 if event.button == 1:
                     if back_btn.is_clicked(event):
                         return None
+                    if auto_btn.is_clicked(event):
+                        board.auto_place_all_ships()
+
+                        for ship in ships:
+                            ship["left"] = 0
+
+                    selected_index = None
 
                     if all_placed and ready_btn.is_clicked(event):
                         return board
@@ -259,8 +268,8 @@ def battle_screen(screen, font, big_font, board_player_1, board_player_2):
         enemy_board.shots = enemy_data.shots
 
         draw_text(screen, player_text, 455, 95, font)
-        draw_text(screen, "Ваше поле", 160, 130, font)
-        draw_text(screen, "Поле суперника", 650, 130, font)
+        draw_text(screen, "Ваше поле", 160, 115, font)
+        draw_text(screen, "Поле суперника", 650, 115, font)
 
         own_board.draw(screen, font, show_ships=True)
         enemy_board.draw(screen, font, show_ships=False)
