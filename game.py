@@ -297,9 +297,10 @@ def battle_screen(screen, font, big_font, board_player_1, board_player_2):
 
                     elif result == "miss":
                         message = "Мимо:("
-
+                        pygame.draw.rect(screen, PAPER_BG, (300, 600, 500, 60))
+                        draw_text(screen, message, 380, 610, font, RED_INK)
                         pygame.display.update()
-                        pygame.time.delay(800)
+                        pygame.time.delay(1000)
                         pygame.event.clear()
 
                         current_player = 2 if current_player == 1 else 1
