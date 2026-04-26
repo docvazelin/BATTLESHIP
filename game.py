@@ -19,7 +19,7 @@ def create_ship_list():
 
 
 def placement_screen(screen, font, big_font):
-    board = Board(430, 150)
+    board = Board(480, 150)
     ships = create_ship_list()
 
     selected_index = None
@@ -31,13 +31,20 @@ def placement_screen(screen, font, big_font):
     while True:
         draw_paper_background(screen)
 
-        draw_text(screen, "Розміщення кораблів", 360, 55, big_font)
-        draw_text(screen, "1. Оберіть тип корабля зліва", 70, 110, font)
-        draw_text(screen, "2. Наведіть мишку на поле", 70, 145, font)
-        draw_text(screen, "3. Натисніть ЛКМ, щоб поставити", 70, 180, font)
-        draw_text(screen, "R — повернути корабель", 70, 215, font)
-        draw_text(screen, "ЛКМ по кораблю — прибрати його", 70, 250, font)
+        # Заголовок по центру
+        draw_text(screen, "Розміщення кораблів", 380, 40, big_font)
 
+        # ===== ЛІВА ПАНЕЛЬ ПІДКАЗОК =====
+        panel_rect = pygame.Rect(40, 90, 300, 200)
+        pygame.draw.rect(screen, PAPER_LIGHT, panel_rect, border_radius=10)
+        pygame.draw.rect(screen, PAPER_LINE, panel_rect, 3, border_radius=10)
+
+        draw_text(screen, "ІНСТРУКЦІЯ:", 60, 105, font, PAPER_DARK)
+        draw_text(screen, "1. Обери корабель", 60, 135, font)
+        draw_text(screen, "2. Наведи на поле", 60, 165, font)
+        draw_text(screen, "3. ЛКМ — поставити", 60, 195, font)
+        draw_text(screen, "R — повернути", 60, 225, font)
+        draw_text(screen, "Клік по кораблю — прибрати", 60, 255, font)
         board.draw(screen, font)
 
         ship_buttons = []
