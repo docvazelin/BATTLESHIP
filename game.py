@@ -301,6 +301,14 @@ def battle_screen(screen, font, big_font, board_player_1, board_player_2):
                             winner = "Гравець 1 переміг!" if current_player == 1 else "Гравець 2 переміг!"
                             win_screen(screen, font, big_font, winner)
                             return
+                    
+                    elif result == "destroyed":
+                        message = "Корабель знищено!"
+                        message = "Корабель знищено! Стріляйте ще раз."
+                        if enemy_data.all_ships_destroyed():
+                            winner = "Гравець 1 переміг!" if current_player == 1 else "Гравець 2 переміг!"
+                            win_screen(screen, font, big_font, winner)
+                            return
 
                     elif result == "miss":
                         message = "Мимо:("

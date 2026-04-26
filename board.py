@@ -9,11 +9,8 @@ class Board:
         self.y = y
         self.cell = cell_size
         self.ships = []
-        self.shots = {}  # ← для пострілів
+        self.shots = {}
 
-    # =========================
-    # МАЛЮВАННЯ ПОЛЯ
-    # =========================
     def draw(self, screen, font, show_ships=True):
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
@@ -27,24 +24,15 @@ class Board:
                 pygame.draw.rect(screen, PAPER_LIGHT, rect)
                 pygame.draw.rect(screen, PAPER_LINE, rect, 2)
 
-        # літери
         for col, letter in enumerate(LETTERS):
             text = font.render(letter, True, INK)
-            screen.blit(
-                text,
-                (self.x + col * self.cell + 10, self.y - 30)
-            )
+            screen.blit(text, (self.x + col * self.cell + 10, self.y - 30))
 
-        # цифри
         for row in range(BOARD_SIZE):
             number = str(BOARD_SIZE - row)
             text = font.render(number, True, INK)
-            screen.blit(
-                text,
-                (self.x - 30, self.y + row * self.cell + 10)
-            )
+            screen.blit(text, (self.x - 30, self.y + row * self.cell + 10))
 
-        # кораблі
         if show_ships:
             for ship in self.ships:
                 for col, row in ship["cells"]:
@@ -56,29 +44,8 @@ class Board:
                     )
                     pygame.draw.rect(screen, SHIP_COLOR, rect, border_radius=6)
 
-        # постріли
         self.draw_shots(screen)
-    def auto_place_all_ships(self):
-        self.ships = []
-        self.shots = {}
 
-        for name, size, count in SHIPS:
-            for _ in range(count):
-                placed = False
-
-                while not placed:
-                    orientation = random.choice(["H", "V"])
-                    col = random.randint(0, BOARD_SIZE - 1)
-                    row = random.randint(0, BOARD_SIZE - 1)
-
-                    cells = self.get_ship_cells(col, row, size, orientation)
-
-                    if self.can_place_ship(cells):
-                        self.place_ship(name, size, cells)
-                        placed = True
-    # =========================
-    # ПРЕВ'Ю КОРАБЛЯ
-    # =========================
     def draw_preview(self, screen, cells, can_place):
         if not cells:
             return
@@ -95,9 +62,6 @@ class Board:
                 )
                 pygame.draw.rect(screen, color, rect, border_radius=6)
 
-    # =========================
-    # ОТРИМАННЯ КЛІТИНКИ
-    # =========================
     def get_cell_from_mouse(self, pos):
         mx, my = pos
 
@@ -112,9 +76,6 @@ class Board:
 
         return col, row
 
-    # =========================
-    # КЛІТИНКИ КОРАБЛЯ
-    # =========================
     def get_ship_cells(self, col, row, size, orientation):
         cells = []
 
@@ -126,9 +87,6 @@ class Board:
 
         return cells
 
-    # =========================
-    # ПЕРЕВІРКА МОЖЛИВОСТІ РОЗМІЩЕННЯ
-    # =========================
     def can_place_ship(self, cells):
         for col, row in cells:
             if col < 0 or col >= BOARD_SIZE or row < 0 or row >= BOARD_SIZE:
@@ -148,9 +106,6 @@ class Board:
 
         return True
 
-    # =========================
-    # ДОДАТИ КОРАБЕЛЬ
-    # =========================
     def place_ship(self, name, size, cells):
         if self.can_place_ship(cells):
             self.ships.append({
@@ -162,9 +117,6 @@ class Board:
 
         return False
 
-    # =========================
-    # ВИДАЛИТИ КОРАБЕЛЬ
-    # =========================
     def remove_ship_at(self, col, row):
         for ship in self.ships:
             if (col, row) in ship["cells"]:
@@ -173,24 +125,75 @@ class Board:
 
         return None
 
-    # =========================
-    # ПОСТРІЛ
-    # =========================
+    def auto_place_all_ships(self):
+        self.ships = []
+        self.shots = {}
+
+        for name, size, count in SHIPS:
+            for _ in range(count):
+                placed = False
+
+                while not placed:
+                    orientation = random.choice(["H", "V"])
+                    col = random.randint(0, BOARD_SIZE - 1)
+                    row = random.randint(0, BOARD_SIZE - 1)
+
+                    cells = self.get_ship_cells(col, row, size, orientation)
+
+                    if self.can_place_ship(cells):
+                        self.place_ship(name, size, cells)
+                        placed = True
+
     def receive_shot(self, col, row):
-        if (col, row) in self.shots:
+        current_cell = (col, row)
+
+        if current_cell in self.shots:
+            if self.shots[current_cell] == "miss_auto":
+                return "auto_miss"
+
             return "again"
 
         for ship in self.ships:
-            if (col, row) in ship["cells"]:
-                self.shots[(col, row)] = "hit"
+            if current_cell in ship["cells"]:
+                self.shots[current_cell] = "hit"
+
+                if self.is_ship_destroyed(ship):
+                    self.mark_around_destroyed_ship(ship)
+                    return "destroyed"
+
                 return "hit"
 
-        self.shots[(col, row)] = "miss"
+        self.shots[current_cell] = "miss"
         return "miss"
 
-    # =========================
-    # МАЛЮВАННЯ ПОСТРІЛІВ
-    # =========================
+    def is_ship_destroyed(self, ship):
+        for cell in ship["cells"]:
+            if cell not in self.shots or self.shots[cell] != "hit":
+                return False
+
+        return True
+
+    def all_ships_destroyed(self):
+        for ship in self.ships:
+            for cell in ship["cells"]:
+                if cell not in self.shots or self.shots[cell] != "hit":
+                    return False
+
+        return True
+
+    def mark_around_destroyed_ship(self, ship):
+        for col, row in ship["cells"]:
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    new_col = col + dx
+                    new_row = row + dy
+
+                    if 0 <= new_col < BOARD_SIZE and 0 <= new_row < BOARD_SIZE:
+                        cell = (new_col, new_row)
+
+                        if cell not in self.shots:
+                            self.shots[cell] = "miss_auto"
+
     def draw_shots(self, screen):
         for (col, row), result in self.shots.items():
             cx = self.x + col * self.cell + self.cell // 2
@@ -200,11 +203,5 @@ class Board:
                 pygame.draw.line(screen, RED_INK, (cx - 10, cy - 10), (cx + 10, cy + 10), 3)
                 pygame.draw.line(screen, RED_INK, (cx + 10, cy - 10), (cx - 10, cy + 10), 3)
 
-            elif result == "miss":
+            elif result == "miss" or result == "miss_auto":
                 pygame.draw.circle(screen, BLUE_INK, (cx, cy), 6, 2)
-    def all_ships_destroyed(self):
-        for ship in self.ships:
-            for cell in ship["cells"]:
-                if cell not in self.shots or self.shots[cell] != "hit":
-                    return False
-        return True
