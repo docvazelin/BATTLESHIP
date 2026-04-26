@@ -72,12 +72,17 @@ def placement_screen(screen, font, small_font, big_font, player_name):
         pygame.draw.rect(screen, PAPER_LINE, panel_rect, 4, border_radius=14)
 
         draw_text(screen, "ІНСТРУКЦІЯ:", 70, 115, font, PAPER_DARK)
-        draw_text(screen, "1. Обери корабель", 70, 160, small_font)
-        draw_text(screen, "2. Наведи на поле", 70, 195, small_font)
-        draw_text(screen, "3. ЛКМ — поставити", 70, 230, small_font)
-        draw_text(screen, "R — повернути", 70, 265, small_font)
-        draw_text(screen, "Клік по кораблю — прибрати", 70, 300, small_font)
 
+        draw_text(screen, "1. Обери корабель", 70, 155, small_font)
+        draw_text(screen, "2. Наведи на поле", 70, 185, small_font)
+
+        draw_text(screen, "ЛКМ — поставити корабель", 70, 220, small_font)
+        draw_text(screen, "ЛКМ по кораблю — перемістити", 70, 250, small_font)
+
+        draw_text(screen, "ПКМ по кораблю — видалити", 70, 285, small_font)
+
+        draw_text(screen, "R — змінити напрямок", 70, 320, small_font)
+        
         # ===== ДОШКА =====
         board.draw(screen, font)
 
