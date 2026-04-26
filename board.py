@@ -202,3 +202,9 @@ class Board:
 
             elif result == "miss":
                 pygame.draw.circle(screen, BLUE_INK, (cx, cy), 6, 2)
+    def all_ships_destroyed(self):
+        for ship in self.ships:
+            for cell in ship["cells"]:
+                if cell not in self.shots or self.shots[cell] != "hit":
+                    return False
+        return True
