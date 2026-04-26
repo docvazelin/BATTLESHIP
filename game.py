@@ -160,42 +160,87 @@ def placement_screen(screen, font, small_font, big_font, player_name):
                     orientation = "V" if orientation == "H" else "H"
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                for btn, index in ship_buttons:
-                    if btn.is_clicked(event):
-                        if ships[index]["left"] > 0:
-                            selected_index = index
 
-                cell = board.get_cell_from_mouse(event.pos)
+                # --- ЛІВА КНОПКА МИШІ (ЛКМ) ---
+                if event.button == 1:
 
-                if cell:
-                    col, row = cell
+                    # Кнопки інтерфейсу працюють тільки на ЛКМ
+                    if back_btn.is_clicked(event):
+                        return None
 
-                    removed = board.remove_ship_at(col, row)
+                    if all_placed and ready_btn.is_clicked(event):
+                        return board
 
-                    if removed:
-                        name, size = removed
+                    clicked_menu = False
 
-                        for ship in ships:
-                            if ship["name"] == name and ship["size"] == size:
-                                ship["left"] += 1
-                                selected_index = ships.index(ship)
-                                break
+                    # Вибір типу корабля зліва
+                    for btn, index in ship_buttons:
+                        if btn.is_clicked(event):
+                            clicked_menu = True
 
-                    elif selected_index is not None:
-                        ship = ships[selected_index]
+                            if ships[index]["left"] > 0:
+                                selected_index = index
 
-                        if ship["left"] > 0:
-                            cells = board.get_ship_cells(
-                                col,
-                                row,
-                                ship["size"],
-                                orientation
-                            )
+                    # Якщо клікнули не по меню
+                    if not clicked_menu:
+                        cell = board.get_cell_from_mouse(event.pos)
 
-                            if board.place_ship(ship["name"], ship["size"], cells):
-                                ship["left"] -= 1
+                        if cell:
+                            col, row = cell
 
-                                if ship["left"] == 0:
-                                    selected_index = None
+                            # Якщо корабель обрано — ставимо його
+                            if selected_index is not None:
+                                selected_ship = ships[selected_index]
+
+                                if selected_ship["left"] > 0:
+                                    cells = board.get_ship_cells(
+                                        col,
+                                        row,
+                                        selected_ship["size"],
+                                        orientation
+                                    )
+
+                                    if board.can_place_ship(cells):
+                                        if board.place_ship(
+                                            selected_ship["name"],
+                                            selected_ship["size"],
+                                            cells
+                                        ):
+                                            selected_ship["left"] -= 1
+
+                                            if selected_ship["left"] == 0:
+                                                selected_index = None
+
+                            # Якщо нічого не обрано — піднімаємо корабель для переміщення
+                            else:
+                                removed = board.remove_ship_at(col, row)
+
+                                if removed:
+                                    removed_name, removed_size = removed
+
+                                    for i, ship in enumerate(ships):
+                                        if ship["name"] == removed_name and ship["size"] == removed_size:
+                                            ship["left"] += 1
+                                            selected_index = i
+                                            break
+
+                # --- ПРАВА КНОПКА МИШІ (ПКМ) ---
+                elif event.button == 3:
+
+                    # ПКМ видаляє корабель тільки якщо зараз нічого не обрано
+                    if selected_index is None:
+                        cell = board.get_cell_from_mouse(event.pos)
+
+                        if cell:
+                            col, row = cell
+                            removed = board.remove_ship_at(col, row)
+
+                            if removed:
+                                removed_name, removed_size = removed
+
+                                for ship in ships:
+                                    if ship["name"] == removed_name and ship["size"] == removed_size:
+                                        ship["left"] += 1
+                                        break
 
         pygame.display.update() 
