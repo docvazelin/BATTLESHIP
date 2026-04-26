@@ -4,6 +4,28 @@ from settings import *
 from ui import Button, draw_text, draw_paper_background
 
 
+def splash_screen(screen):
+    splash = pygame.image.load("assets/start_screen.png")
+    splash = pygame.transform.scale(splash, (WIDTH, HEIGHT))
+
+    while True:
+        screen.blit(splash, (0, 0))
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.event.clear()
+                return
+
+            if event.type == pygame.KEYDOWN:
+                pygame.event.clear()
+                return
+
+
 def main_menu(screen, font, big_font):
     start_btn = Button(410, 280, 280, 65, "Розпочати гру")
     settings_btn = Button(410, 365, 280, 65, "Налаштування")
@@ -17,8 +39,11 @@ def main_menu(screen, font, big_font):
 
         draw_text(screen, "паперова версія гри", 430, 215, font, PAPER_DARK)
 
-        for btn in [start_btn, settings_btn, exit_btn]:
-            btn.draw(screen, font)
+        start_btn.draw(screen, font)
+        settings_btn.draw(screen, font)
+        exit_btn.draw(screen, font)
+
+        pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -34,8 +59,6 @@ def main_menu(screen, font, big_font):
             if exit_btn.is_clicked(event):
                 pygame.quit()
                 sys.exit()
-
-        pygame.display.update()
 
 
 def settings_menu(screen, font, big_font):
@@ -53,6 +76,8 @@ def settings_menu(screen, font, big_font):
 
         back_btn.draw(screen, font)
 
+        pygame.display.update()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -60,5 +85,3 @@ def settings_menu(screen, font, big_font):
 
             if back_btn.is_clicked(event):
                 return
-
-        pygame.display.update()

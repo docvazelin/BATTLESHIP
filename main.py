@@ -1,6 +1,6 @@
 import pygame
 from settings import *
-from menus import main_menu
+from menus import main_menu, splash_screen
 from game import placement_screen, pass_turn_screen, battle_screen
 
 pygame.init()
@@ -16,12 +16,12 @@ big_font = pygame.font.SysFont("arial", 42, bold=True)
 
 
 def main():
+    splash_screen(screen)
+
     while True:
         result = main_menu(screen, font, big_font)
 
         if result == "start":
-
-            # ===== ГРАВЕЦЬ 1 =====
             pass_turn_screen(screen, font, big_font, "Гравець 1")
 
             board_player_1 = placement_screen(
@@ -35,7 +35,6 @@ def main():
             if board_player_1 is None:
                 continue
 
-            # ===== ГРАВЕЦЬ 2 =====
             pass_turn_screen(screen, font, big_font, "Гравець 2")
 
             board_player_2 = placement_screen(
@@ -56,6 +55,7 @@ def main():
                 board_player_1,
                 board_player_2
             )
+
 
 if __name__ == "__main__":
     main()

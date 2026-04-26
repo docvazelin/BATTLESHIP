@@ -3,6 +3,39 @@ import random
 from settings import *
 
 
+def load_ship_image(size):
+    path = f"assets/ships/ship_{size}.png"
+
+    try:
+        image = pygame.image.load(path)
+        print(f"Завантажено: {path}")
+        return image
+    except Exception as error:
+        print(f"Не знайдено: {path}", error)
+        return None
+
+
+def load_mark_image(name):
+    try:
+        return pygame.image.load(f"assets/marks/{name}.png")
+    except:
+        return None
+
+
+SHIP_IMAGES = {
+    4: load_ship_image(4),
+    3: load_ship_image(3),
+    2: load_ship_image(2),
+    1: load_ship_image(1),
+}
+
+MARK_IMAGES = {
+    "hit": load_mark_image("hit"),
+    "miss": load_mark_image("miss"),
+    "miss_auto": load_mark_image("miss"),
+}
+
+
 class Board:
     def __init__(self, x, y, cell_size=CELL_SIZE):
         self.x = x
@@ -20,7 +53,6 @@ class Board:
                     self.cell,
                     self.cell
                 )
-
                 pygame.draw.rect(screen, PAPER_LIGHT, rect)
                 pygame.draw.rect(screen, PAPER_LINE, rect, 2)
 
@@ -35,16 +67,47 @@ class Board:
 
         if show_ships:
             for ship in self.ships:
-                for col, row in ship["cells"]:
-                    rect = pygame.Rect(
-                        self.x + col * self.cell + 5,
-                        self.y + row * self.cell + 5,
-                        self.cell - 10,
-                        self.cell - 10
-                    )
-                    pygame.draw.rect(screen, SHIP_COLOR, rect, border_radius=6)
+                self.draw_ship(screen, ship)
 
         self.draw_shots(screen)
+
+    def draw_ship(self, screen, ship):
+        cells = ship["cells"]
+        size = ship["size"]
+
+        min_col = min(cell[0] for cell in cells)
+        min_row = min(cell[1] for cell in cells)
+        max_row = max(cell[1] for cell in cells)
+
+        x = self.x + min_col * self.cell
+        y = self.y + min_row * self.cell
+
+        image = SHIP_IMAGES.get(size)
+
+        if image:
+            if min_row == max_row:
+                image = pygame.transform.scale(
+                    image,
+                    (self.cell * size, self.cell)
+                )
+            else:
+                image = pygame.transform.rotate(image, 90)
+                image = pygame.transform.scale(
+                    image,
+                    (self.cell, self.cell * size)
+                )
+
+            screen.blit(image, (x, y))
+
+        else:
+            for col, row in cells:
+                rect = pygame.Rect(
+                    self.x + col * self.cell + 5,
+                    self.y + row * self.cell + 5,
+                    self.cell - 10,
+                    self.cell - 10
+                )
+                pygame.draw.rect(screen, SHIP_COLOR, rect, border_radius=6)
 
     def draw_preview(self, screen, cells, can_place):
         if not cells:
@@ -196,12 +259,25 @@ class Board:
 
     def draw_shots(self, screen):
         for (col, row), result in self.shots.items():
-            cx = self.x + col * self.cell + self.cell // 2
-            cy = self.y + row * self.cell + self.cell // 2
+            x = self.x + col * self.cell
+            y = self.y + row * self.cell
 
-            if result == "hit":
-                pygame.draw.line(screen, RED_INK, (cx - 10, cy - 10), (cx + 10, cy + 10), 3)
-                pygame.draw.line(screen, RED_INK, (cx + 10, cy - 10), (cx - 10, cy + 10), 3)
+            image = MARK_IMAGES.get(result)
 
-            elif result == "miss" or result == "miss_auto":
-                pygame.draw.circle(screen, BLUE_INK, (cx, cy), 6, 2)
+            if image:
+                image = pygame.transform.scale(
+                    image,
+                    (self.cell - 8, self.cell - 8)
+                )
+                screen.blit(image, (x + 4, y + 4))
+
+            else:
+                cx = x + self.cell // 2
+                cy = y + self.cell // 2
+
+                if result == "hit":
+                    pygame.draw.line(screen, RED_INK, (cx - 10, cy - 10), (cx + 10, cy + 10), 3)
+                    pygame.draw.line(screen, RED_INK, (cx + 10, cy - 10), (cx - 10, cy + 10), 3)
+
+                elif result == "miss" or result == "miss_auto":
+                    pygame.draw.circle(screen, BLUE_INK, (cx, cy), 6, 2)
