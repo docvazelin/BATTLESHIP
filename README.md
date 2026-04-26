@@ -10,7 +10,6 @@
 🏆 Екран перемоги
 🎨 Унікальний paper-style дизайн
 🖼️ Кастомні assets (кораблі, маркери)
-🔊 Саунд-дизайн (паперовий стиль)
 🕹️ Управління
 Розстановка кораблів
 ЛКМ — поставити корабель
@@ -28,8 +27,6 @@ BATTLESHIP/
 ├── menus.py
 ├── ui.py
 ├── settings.py
-├── sound_manager.py
-├── generate_sounds.py
 │
 ├── assets/
 │   ├── ships/
@@ -42,15 +39,6 @@ BATTLESHIP/
 │   │   ├── hit.png
 │   │   └── miss.png
 │   │
-│   ├── sounds/
-│   │   ├── click.wav
-│   │   ├── place.wav
-│   │   ├── rotate.wav
-│   │   ├── remove.wav
-│   │   ├── hit.wav
-│   │   ├── miss.wav
-│   │   ├── destroy.wav
-│   │   └── win.wav
 │   │
 │   └── start_screen.png
 ⚙️ Встановлення
@@ -59,23 +47,14 @@ BATTLESHIP/
 pip install pygame numpy
 ▶️ Запуск гри
 python main.py
-🔊 Генерація звуків
-python generate_sounds.py
 
 Після цього всі звуки з’являться в:
 
-assets/sounds/
 🎨 Кастомізація
 Фон гри
 
 Знайди в коді коментар:
 
-# TODO: change background here
-Звук
-
-У sound_manager.py:
-
-# TODO: enable/disable sound
 🧠 Логіка гри
 Кораблі не можуть торкатися навіть по діагоналі
 При знищенні корабля:
